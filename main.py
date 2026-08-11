@@ -1,5 +1,7 @@
 # 입력 부분 공부
 def LearnInput():
+    '''입출력 테스트 부부'''
+
     # 기본 인풋
     input_str = input()
     print("입력 받은 값:", input_str)
@@ -24,30 +26,150 @@ def LearnInput():
     m1, m2, m3 = map(int, input("map?!?").split())
     print(m1, m2, m3)
 
+
+filter_a = []
+filter_b = []
+
+
+# npu 메뉴 출력 부분
 def print_npu_simulator_menu():
     print("=== Mini NPU Simulator ===")
-    print()
     print("[모드 선택]")
     print("1. 사용자 입력 (3x3)")
     print("2. data.json 분석")
 
 
-def main():
-    print_npu_simulator_menu()
-    
-    choice = input("선택: ")
+# 
+def PrintInputFilterHeader():
+    print("#----------------------------------------")
+    print("# [1] 필터 입력")
+    print("#----------------------------------------")
 
+
+def PrintInputFilter(filter_type):
+    filter_type = filter_type.upper()
+
+    if not (filter_type == 'A' or filter_type == 'B'):
+        print("PrintInputFilter error")
+        return
+
+    print("필터 ", filter_type, "(3줄 입력, 공백 구분)")
+
+
+def CreateMatrix(matrix, num = 3):
+    for i in range(num):
+        row = input()
+        numbers = row.split()
+        numbers = [float(x) for x in numbers]
+
+        matrix.append(numbers)
+
+
+def PrintInputPattern():
+    print("#---------------------------------------")
+    print("# [2] 패턴 입력")
+    print("#---------------------------------------")
+    print("패턴 (3줄 입력, 공백 구분)")
+
+
+def GetScore(filter, pattern, num = 3):
+    total = 0.0
+    for i in range(num):
+        for j in range(num):
+            total += filter[i][j] * pattern[i][j]
+
+    return total
+
+
+def PrintMAC(score_a, score_b, avg_runtime, judgment_type):
+    print("#---------------------------------------")
+    print("# [3] MAC 결과")
+    print("#---------------------------------------")
+    print("A 점수:", score_a)
+    print("B 점수:", score_b)
+    print("연산 시간(평균/10회):", avg_runtime, "ms")
+
+    match judgment_type:
+        case 0:
+            print("판정: A")
+        case 1:
+            print("판정: B")
+        case 2:
+            print("판정 불가")
+    
+
+def CalculateNpuSimilarity(score_a, score_b):
+    judge_type = 3
+
+    diff = abs(score_a - score_b)
+
+    if diff < 1e-9:
+        judge_type = 2
+    elif score_a > score_b:
+        judge_type = 0
+    else:
+        judge_type = 1
+
+    return judge_type
+
+
+def UserInput():
+    # 1-1. 필터 입력 헤더 출력
+    PrintInputFilterHeader()
+
+    # 1-2. 필터 A 입력 받기
+    PrintInputFilter('A')
+    CreateMatrix(filter_a)
+
+    # 1-3. 필터 B 입력 받기
+    PrintInputFilter('B')
+    CreateMatrix(filter_b)
+
+    # 2-1. 패턴 입력 헤더 출력
+    PrintInputPattern()
+
+    # 2-2. 패턴 입력 받기
+    pattern = []
+    CreateMatrix(pattern)
+
+    print(filter_a)
+    print(filter_b)
+    print(pattern)
+
+    # 3-1 각 점수 계산하기
+    score = []
+    score.append(GetScore(filter_a, pattern))
+    score.append(GetScore(filter_b, pattern))
+
+    # 3-2 판단하기
+    judge = CalculateNpuSimilarity(score[0], score[1])
+
+    PrintMAC(score[0], score[1], 10, judge)
+
+
+# 실제 메인 함수
+def main():
+    # 메뉴 출력 함수 호출
+    print_npu_simulator_menu()
+
+    # 메뉴 선택
+    choice = int(input("선택: "))
+
+    # 메뉴 확인
     print("선택한 모드:", choice)
 
-    # 간단한 입력 받아보기
-
-
+    match choice:
+        case 1:
+            UserInput()
+        case 2:
+            pass
+            
 
 
 # main 실행
 if __name__ == "__main__":
     # 테스트 코드
-    LearnInput()
+    # LearnInput()
 
     # 실제 실행될 코드
-    # main()
+    main()
