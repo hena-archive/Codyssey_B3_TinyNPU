@@ -19,6 +19,10 @@ def LearnInput():
     print(num1, type(num1))
     print(num2, type(num2))
 
+    # map(함수, 반복가능한_자료)
+    # int가 함수라고?
+    m1, m2, m3 = map(int, input("map?!?").split())
+    print(m1, m2, m3)
 
 def print_npu_simulator_menu():
     print("=== Mini NPU Simulator ===")
