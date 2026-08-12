@@ -280,6 +280,331 @@ def LearnJSON():
     # 쓰기
     WriteJSON()
 
+
+def PrintJSON(data, key = ""):
+    match key:
+        case "":
+            print(data)
+        case "filters_5_c":
+            print(data['filters']['size_5']['cross'])
+        case "filters_5_x":
+            print(data['filters']['size_5']['x'])
+        case "filters_13_c":
+            print(data['filters']['size_13']['cross'])
+        case "filters_13_x":
+            print(data['filters']['size_13']['x'])
+        case "filters_25_c":
+            print(data['filters']['size_25']['cross'])
+        case "filters_25_x":
+            print(data['filters']['size_25']['x'])
+
+
+        case "filters_5_c":
+            print(data['filters']['size_5']['cross'])
+        case "filters_5_x":
+            print(data['filters']['size_5']['x'])
+        case "filters_13_c":
+            print(data['filters']['size_13']['cross'])
+        case "filters_13_x":
+            print(data['filters']['size_13']['x'])
+        case "filters_25_c":
+            print(data['filters']['size_25']['cross'])
+        case "filters_25_x":
+            print(data['filters']['size_25']['x'])
+
+
+def LoadFilters():
+    print("#---------------------------------------")
+    print("# [1] 필터 로드")
+    print("#---------------------------------------")
+
+
+
+    print("✓ size_5  필터 로드 완료 (Cross, X)")
+    print("✓ size_13  필터 로드 완료 (Cross, X)")
+    print("✓ size_25  필터 로드 완료 (Cross, X)")
+
+
+def normalize_filter(value):
+    """filter 키를 표준 라벨로 변환"""
+    value = str(value).strip().lower()
+
+    if value == "cross":
+        return "Cross"
+
+    if value == "x":
+        return "X"
+
+    return None
+
+
+def AnalyzeJSON(filename = ""):
+    if filename == "":
+        filename = "data.json"
+
+    with open(filename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+
+    analyze_data(data)
+
+    performance_test(
+        data["filters"]
+    )
+    # print(data)
+
+    # json 출력 테스트
+    # PrintJSON(data, "filters_5_c")
+
+
+EPSILON = 1e-9
+
+
+# ==========================================
+# 라벨 정규화
+# ==========================================
+
+def normalize_label(value):
+    value = str(value).strip().lower()
+
+    if value in ["+", "cross"]:
+        return "Cross"
+
+    if value == "x":
+        return "X"
+
+    return None
+
+
+# ==========================================
+# MAC 연산
+# ==========================================
+
+def mac(pattern, filter_matrix):
+    score = 0.0
+
+    for i in range(len(pattern)):
+        for j in range(len(pattern[i])):
+            score += pattern[i][j] * filter_matrix[i][j]
+
+    return score
+
+
+# ==========================================
+# 판정
+# ==========================================
+
+def decide(cross_score, x_score):
+
+    if abs(cross_score - x_score) < EPSILON:
+        return "UNDECIDED"
+
+    if cross_score > x_score:
+        return "Cross"
+
+    return "X"
+
+
+# ==========================================
+# JSON 불러오기
+# ==========================================
+
+def load_json(filename):
+
+    with open(filename, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+# ==========================================
+# 패턴 하나 테스트
+# ==========================================
+
+def test_pattern(pattern_id, pattern_data, filters):
+
+    pattern = pattern_data["input"]
+
+    # expected 정규화
+    expected = normalize_label(pattern_data["expected"])
+
+    # 패턴 크기 확인
+    size = len(pattern)
+
+    filter_key = f"size_{size}"
+
+    cross_filter = filters[filter_key]["cross"]
+    x_filter = filters[filter_key]["x"]
+
+    # MAC
+    cross_score = mac(pattern, cross_filter)
+    x_score = mac(pattern, x_filter)
+
+    # 판정
+    result = decide(cross_score, x_score)
+
+    # PASS / FAIL
+    if result == expected:
+        status = "PASS"
+    else:
+        status = "FAIL"
+
+    # 출력
+    print(f"\n[{pattern_id}]")
+    print(f"크기       : {size}x{size}")
+    print(f"Cross 점수 : {cross_score}")
+    print(f"X 점수     : {x_score}")
+    print(f"판정       : {result}")
+    print(f"Expected   : {expected}")
+    print(f"결과       : {status}")
+
+    if status == "FAIL":
+
+        if result == "UNDECIDED":
+            reason = "두 필터 점수가 epsilon 범위 내에서 동일함"
+        else:
+            reason = f"Expected={expected}, 실제 판정={result}"
+
+        print(f"실패 사유  : {reason}")
+
+    return status
+
+
+# ==========================================
+# 전체 데이터 분석
+# ==========================================
+
+def analyze_data(data):
+
+    filters = data["filters"]
+    patterns = data["patterns"]
+
+    total = 0
+    passed = 0
+    failed = 0
+
+    print("=" * 60)
+    print("data.json 분석 시작")
+    print("=" * 60)
+
+    for pattern_id, pattern_data in patterns.items():
+
+        total += 1
+
+        status = test_pattern(
+            pattern_id,
+            pattern_data,
+            filters
+        )
+
+        if status == "PASS":
+            passed += 1
+        else:
+            failed += 1
+
+    # 결과 요약
+    print("\n" + "=" * 60)
+    print("결과 요약")
+    print("=" * 60)
+
+    print(f"전체 테스트 : {total}")
+    print(f"통과        : {passed}")
+    print(f"실패        : {failed}")
+
+
+# ==========================================
+# 성능 측정
+# ==========================================
+
+def measure_mac(size, filters, repeat=10):
+
+    filter_key = f"size_{size}"
+
+    cross_filter = filters[filter_key]["cross"]
+
+    # 테스트용 패턴
+    pattern = [
+        [1.0 for _ in range(size)]
+        for _ in range(size)
+    ]
+
+    total_time = 0.0
+
+    for _ in range(repeat):
+
+        start = time.perf_counter()
+
+        mac(pattern, cross_filter)
+
+        end = time.perf_counter()
+
+        total_time += end - start
+
+    average_time = total_time / repeat
+
+    return average_time * 1000
+
+
+# ==========================================
+# 성능 분석
+# ==========================================
+
+def performance_test(filters):
+
+    print("\n" + "=" * 60)
+    print("성능 분석")
+    print("=" * 60)
+
+    print("크기(NxN) | 평균 시간(ms) | 연산 횟수(N²)")
+    print("-" * 45)
+
+    for size in [3, 5, 13, 25]:
+
+        # 3x3 필터는 현재 JSON에 없기 때문에
+        # 성능 측정용으로 별도 생성
+        if size == 3:
+
+            filter_matrix = [
+                [1.0 for _ in range(3)]
+                for _ in range(3)
+            ]
+
+            pattern = [
+                [1.0 for _ in range(3)]
+                for _ in range(3)
+            ]
+
+            total_time = 0.0
+
+            for _ in range(10):
+
+                start = time.perf_counter()
+
+                mac(pattern, filter_matrix)
+
+                end = time.perf_counter()
+
+                total_time += end - start
+
+            average_ms = (total_time / 10) * 1000
+
+        else:
+
+            average_ms = measure_mac(
+                size,
+                filters,
+                repeat=10
+            )
+
+        operation_count = size * size
+
+        print(
+            f"{size}x{size:<5} | "
+            f"{average_ms:.6f}      | "
+            f"{operation_count}"
+        )
+
+
+
+
 # 실제 메인 함수
 def main():
     # 메뉴 출력 함수 호출
@@ -295,7 +620,7 @@ def main():
         case 1:
             UserInput()
         case 2:
-            pass
+            AnalyzeJSON()
 
 # main 실행
 if __name__ == "__main__":
@@ -303,7 +628,7 @@ if __name__ == "__main__":
     # LearnInput()
 
     # JSON
-    LearnJSON()
+    # LearnJSON()
 
     # 실제 실행될 코드
-    # main()
+    main()
