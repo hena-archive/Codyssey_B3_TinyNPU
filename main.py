@@ -1,3 +1,5 @@
+import time
+
 # 입력 부분 공부
 def LearnInput():
     '''입출력 테스트 부부'''
@@ -141,10 +143,21 @@ def UserInput():
     score.append(GetScore(filter_a, pattern))
     score.append(GetScore(filter_b, pattern))
 
+
+    start = time.perf_counter()
+
+    for _ in range(10):
+        GetScore(filter_a, pattern)
+        GetScore(filter_b, pattern)
+
+    end = time.perf_counter()
+
+    avg_runtime = (end - start) / 10 * 1000
+
     # 3-2 판단하기
     judge = CalculateNpuSimilarity(score[0], score[1])
 
-    PrintMAC(score[0], score[1], 10, judge)
+    PrintMAC(score[0], score[1], avg_runtime, judge)
 
 
 # 실제 메인 함수
