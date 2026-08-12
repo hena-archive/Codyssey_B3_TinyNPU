@@ -161,97 +161,101 @@ def UserInput():
 
 import json
 
-def LearnJSON():
+def ReadJSON():
     # with은 스코프를 만들지 않는다. ㅋㅋ
-    with open("basic.json", "r+", encoding="utf-8") as file:
-        data = json.load(file)
-
-
-    # 스코프 나가도 data가 되는 이유임 ㅋㅋㅋ
-    print("### data 출력 ###")
-    print(data)
-    print("\n### data 출력 완료 ###\n")
-
-    # type 출력
-    print(type(data))
-    print()
-
-    # str 출력
-    print(data['name'])
-    print(type(data['name']))
-    print()
-
-    # int 출력
-    print(data['age'])
-    print(type(data['age']))
-    print()
-
-    # float 출력
-    print(data['height'])
-    print(type(data['height']))
-    print()
-
-    # float 출력
-    print(data['student'])
-    print(type(data['student']))
-    print()
-
-    # list - hobbies 출력
-    print(data['hobbies'])
-    print(type(data['hobbies']))
-
-    for hobby in data['hobbies']:
-        print(hobby, type(hobby))
-    print()
-
-    # list - score 출력
-    print(data['scores'])
-    print(type(data['scores']))
-    for score in data['scores']:
-        print(score, type(score))
-    print()
-
-    # dict - address 출력
-    print(data['address'])
-    print(type(data['address']))
-    for addr in data['address']:
-        print(addr, type(addr))
-    print()
-
-    # list 안의 dict - friends 출력
-    print(data['friends'])
-    print(type(data['friends']))
-    for friend in data['friends']:
-        print(friend, type(friend))
-
-
-        # 방법 - enumerate 불가
-        # for name, age, student in enumerate(friend):
-        #     print(name, age, student)
-
-        # 방법 - dict.items
-        for key, value in friend.items():
-            print(key, value)
-
-        # 방법 - 직접 뽑기
-        name = friend['name']
-        age = friend['age']
-        student = friend['student']
-        print(name, age, student)
-    print()
-
-    # 2차원 matrix 출력
-    print(data['matrix'])
-    print(type(data['matrix']))
-    for mat in data['matrix']:
-        print(mat, type(mat))
+        with open("basic.json", "r+", encoding="utf-8") as file:
+            data = json.load(file)
     
-    print()
+    
+        # 스코프 나가도 data가 되는 이유임 ㅋㅋㅋ
+        print("### data 출력 ###")
+        print(data)
+        print("\n### data 출력 완료 ###\n")
+    
+        # type 출력
+        print(type(data))
+        print()
+    
+        # str 출력
+        print(data['name'])
+        print(type(data['name']))
+        print()
+    
+        # int 출력
+        print(data['age'])
+        print(type(data['age']))
+        print()
+    
+        # float 출력
+        print(data['height'])
+        print(type(data['height']))
+        print()
+    
+        # float 출력
+        print(data['student'])
+        print(type(data['student']))
+        print()
+    
+        # list - hobbies 출력
+        print(data['hobbies'])
+        print(type(data['hobbies']))
+    
+        for hobby in data['hobbies']:
+            print(hobby, type(hobby))
+        print()
+    
+        # list - score 출력
+        print(data['scores'])
+        print(type(data['scores']))
+        for score in data['scores']:
+            print(score, type(score))
+        print()
+    
+        # dict - address 출력
+        print(data['address'])
+        print(type(data['address']))
+        for addr in data['address']:
+            print(addr, type(addr))
+        print()
+    
+        # list 안의 dict - friends 출력
+        print(data['friends'])
+        print(type(data['friends']))
+        for friend in data['friends']:
+            print(friend, type(friend))
+    
+    
+            # 방법 - enumerate 불가
+            # for name, age, student in enumerate(friend):
+            #     print(name, age, student)
+    
+            # 방법 - dict.items
+            for key, value in friend.items():
+                print(key, value)
+    
+            # 방법 - 직접 뽑기
+            name = friend['name']
+            age = friend['age']
+            student = friend['student']
+            print(name, age, student)
+        print()
+    
+        # 2차원 matrix 출력
+        print(data['matrix'])
+        print(type(data['matrix']))
+        for mat in data['matrix']:
+            print(mat, type(mat))
+        
+        print()
+    
+        # dict 안에 리스트
+        for idx,  skill in enumerate(data['skills']):
+            print(idx, skill)
+        print()
 
-    # dict 안에 리스트
-    for idx,  skill in enumerate(data['skills']):
-        print(idx, skill)
-    print()
+def LearnJSON():
+    # 읽기
+    ReadJSON()
 
 # 실제 메인 함수
 def main():
@@ -269,7 +273,6 @@ def main():
             UserInput()
         case 2:
             pass
-            
 
 # main 실행
 if __name__ == "__main__":
@@ -277,7 +280,7 @@ if __name__ == "__main__":
     # LearnInput()
 
     # JSON
-    LearnJSON()
+    # LearnJSON()
 
     # 실제 실행될 코드
     # main()
