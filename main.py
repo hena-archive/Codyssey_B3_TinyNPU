@@ -253,9 +253,32 @@ def ReadJSON():
             print(idx, skill)
         print()
 
+def WriteJSON():
+    data = {
+        "name": "철수",
+        "age": 20,
+        "hobbies":[
+            "게임",
+            "독서"
+        ],
+        "foods":{
+            
+        }
+    }
+
+    data['foods']['lunch'] = "막국수"
+
+    with open("write.json", "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=True, indent=2)
+
+    pass
+
 def LearnJSON():
     # 읽기
-    ReadJSON()
+    # ReadJSON()
+
+    # 쓰기
+    WriteJSON()
 
 # 실제 메인 함수
 def main():
@@ -280,7 +303,7 @@ if __name__ == "__main__":
     # LearnInput()
 
     # JSON
-    # LearnJSON()
+    LearnJSON()
 
     # 실제 실행될 코드
     # main()
