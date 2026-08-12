@@ -1,0 +1,81 @@
+{
+    "name": "철수",
+    "age": 20,
+    "height": 175.5,
+    "student": true,
+    "nickname": null,
+    "hobbies": [
+        "게임",
+        "독서",
+        "운동"
+    ],
+    "scores": [
+        90,
+        85,
+        100,
+        77.5
+    ],
+    "address": {
+        "city": "서울",
+        "district": "강남구",
+        "zipcode": "06100"
+    },
+    "contact": {
+        "email": "test@example.com",
+        "phone": "010-1234-5678",
+        "verified": false
+    },
+    "friends": [
+        {
+            "name": "영희",
+            "age": 21,
+            "student": true
+        },
+        {
+            "name": "민수",
+            "age": 22,
+            "student": false
+        }
+    ],
+    "classes": [
+        {
+            "name": "Python",
+            "teacher": "김선생님",
+            "score": 95
+        },
+        {
+            "name": "Docker",
+            "teacher": "이선생님",
+            "score": 88
+        }
+    ],
+    "matrix": [
+        [
+            1,
+            2,
+            3
+        ],
+        [
+            4,
+            5,
+            6
+        ],
+        [
+            7,
+            8,
+            9
+        ]
+    ],
+    "skills": {
+        "programming": [
+            "Python",
+            "Java",
+            "JavaScript"
+        ],
+        "devops": [
+            "Docker",
+            "Git",
+            "Linux"
+        ]
+    }
+}
