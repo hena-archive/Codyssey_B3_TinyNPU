@@ -19,7 +19,7 @@
     - [x] .json 공부
     - [x] python에서 .json 입출력
     - [x] json 키 가져오기
-    - [ ] json에 파일 쓰기 테스트
+    - [x] json에 파일 쓰기 테스트
     - [ ] json 예외 처리
 
 - [ ] data.json 분석
