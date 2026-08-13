@@ -1,16 +1,78 @@
 # Tiny NPC
+- [x] Python 3.8 이상인지 확인
+    - [x] image 첨부
+    - [x] 명령어 및 코드 실행 결과 첨부
 
-## 과제 목표
-- MAC(Multiply-Accumulate) 연산이 무엇이고, AI에서 왜 중요한지 설명할 수 있다.
+- [x] 외부 라이브러리 사용 확인(NumPy, pandas)
+    - [x] image 첨부
+    - [x] 명령어 및 코드 실행 결과 첨부
 
-- 입력 패턴과 필터를 곱하고 더해서 유사도(점수)를 계산하는 원리를 설명할 수 있다.
-
-- data.json의 “키 규칙/라벨 규칙”을 해석하고, 프로그램 내부에서 라벨을 표준화(정규화)하는 이유를 설명할 수 있다.
-
-- 부동소수점 오차가 판정에 어떤 영향을 주는지, 그리고 허용오차(epsilon) 기반 비교 정책이 필요한 이유를 설명할 수 있다.
-크기별 연산 시간을 측정하고, 패턴 크기 증가에 따른 시간 복잡도 O(N²)를 근거와 함께 설명할 수 있다.
-
-- 실패 케이스가 발생했을 때 원인을 “데이터/스키마 문제 vs 로직 문제 vs 수치 비교 문제”로 분리해 진단하고 개선할 수 있다.
+- [x] 표준 라이브러리 사용 확인(json, time 등)
+    - [x] image 첨부
+    - [x] 명령어 및 코드 실행 결과 첨부
 
 
-## 
+- [ ] 실행 방법
+- [ ] 구현 요약
+- [ ] 결과 리포트
+
+grep -R -E "^(import|from) " --include="*.py" .
+
+## 파이썬 버전 확인
+
+### 파이썬 버전 이미지 첨부
+
+- [파이썬 버전](images/PythonVersion.png)
+
+### 파이썬 버전 터미널로 확인
+
+- 명령어
+    ```
+    python --version
+    ```
+
+-   실행 결과
+    ```
+    singainnn6931@c4r2s5 Codyssey_B3_TinyNPU % python --version
+    Python 3.12.13
+    ```
+
+## 외부 라이브러리 사용 확인
+
+### 외부 라이브러리 사용 이미지 첨부
+
+- [외부 라이브러리 사용 여부](images/CheckExternalLibrary.png)
+
+### 외부 라이브러리 사용 터미널로 확인
+
+- 명령어
+    ```
+    grep -R -E "import numpy|from numpy|np\." --include="*.py" .
+    ```
+
+-   실행 결과
+    ```
+    singainnn6931@c4r2s5 Codyssey_B3_TinyNPU % grep -R -E "import numpy|from numpy|np\." --include="*.py" .
+    singainnn6931@c4r2s5 Codyssey_B3_TinyNPU % 
+    ```
+
+
+## 표준 라이브러리 사용 확인
+
+### 표준 라이브러리 사용 이미지 첨부
+
+- [표준 라이브러리 사용 여부](images/CheckExternalLibrary.png)
+
+### 표준 라이브러리 사용 터미널로 확인
+
+- 명령어
+    ```
+    grep -R -E "^(import|from) " --include="*.py" 
+    ```
+
+-   실행 결과
+    ```
+    singainnn6931@c4r2s5 Codyssey_B3_TinyNPU % grep -R -E "^(import|from) " --include="*.py" .
+    ./main.py:import time
+    ./main.py:import json
+    ```
