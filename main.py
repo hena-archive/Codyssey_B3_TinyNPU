@@ -59,13 +59,24 @@ def PrintInputFilter(filter_type):
 
 
 def CreateMatrix(matrix, num = 3):
-    for i in range(num):
+    # 초기화
+    if len(matrix) > 0:
+        matrix = []
+
+    while len(matrix) < num:
+        # 인풋 받기
         row = input()
-        numbers = row.split()
-        numbers = [float(x) for x in numbers]
 
-        matrix.append(numbers)
-
+        # 에러 체크
+        try:
+            numbers = row.split()
+            numbers = [float(x) for x in numbers]
+            if len(numbers) != num:
+                print(f"오류: {num}개의 숫자를 입력해야 합니다.")
+                continue
+            matrix.append(numbers)
+        except ValueError:
+            print("오류: 숫자만 입력해주세요")
 
 def PrintInputPattern():
     print("#---------------------------------------")
@@ -313,19 +324,135 @@ def PrintJSON(data, key = ""):
             print(data['filters']['size_25']['x'])
 
 
-def LoadFilters():
+def LoadFilters(filters):
     print("#---------------------------------------")
     print("# [1] 필터 로드")
     print("#---------------------------------------")
 
+    normalizedFilters = {}
 
 
-    print("✓ size_5  필터 로드 완료 (Cross, X)")
-    print("✓ size_13  필터 로드 완료 (Cross, X)")
-    print("✓ size_25  필터 로드 완료 (Cross, X)")
+    for sizeName, filterData in filters.items():
+        print("my Key: ", sizeName)
+
+        strList = []
+        strList = sizeName.split("_")
+
+        # size_N 형태인지 확인하기
+        flag = False
+        if len(strList) != 2:
+            print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
+        else:
+            try:
+                size = int(strList[1])
+                name = strList[0]
+                if name != "size":
+                    print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
+                    continue
+
+                # Todo: 살짝 애매
+                if type(size) != int:
+                    print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
+                    continue
+
+                print("✓ ", sizeName, " 필터 로드 완료 (Cross, X)")
+            except:
+                print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
 
 
-def normalize_filter(value):
+        newFilter = {}
+        # 라벨 필터링
+        for filterName, matrix in filterData.items():
+            if filterName == "cross":
+                filterName = "Cross"
+            elif filterName == "x":
+                filterName = "X"
+            else:
+                pass
+            newFilter[filterName] = matrix
+
+        # filter 자체를 넣기
+        normalizedFilters[sizeName] = newFilter
+
+
+    # print (normalizedFilters)
+            
+    return normalizedFilters
+
+def LoadPatterns(patterns):
+    normalizedPatterns = {}
+    
+    
+    for sizeName, patternData in patterns.items():
+        
+
+        newPattern = {}
+        # 라벨 필터링
+        for patternKey, originData in patternData.items():
+            if patternKey == "input":
+                pass
+
+            elif patternKey == "expected":
+                if originData == "x":
+                    originData = "X"
+                elif originData == "+":
+                    originData = "Cross"
+            else:
+                pass
+            newPattern[patternKey] = originData
+
+        # pattern 자체를 넣기
+        normalizedPatterns[sizeName] = newPattern
+
+
+    # print (normalizedPatterns)
+            
+    return normalizedPatterns
+
+def AnalyzePatterns(normalizeFilters, normalizePatterns):
+
+    totalCount = 0
+    successCount = 0
+    fail = {}
+    for patternSize, patternData in normalizePatterns.items():
+        strList = patternSize.split('_')
+
+        # 개수 체크
+        if len(strList) != 3:
+            print("tqtqtqtq\n\n\n\n")
+            continue
+
+        totalCount += 1
+        keyName = strList[0] + "_" + strList[1]
+        print ("----- ", patternSize, " -----")
+
+        
+        # 점수 계산 시작
+        cross_score = mac(patternData['input'], normalizeFilters[keyName]['Cross'])
+        x_score = mac(patternData['input'], normalizeFilters[keyName]['X'])
+        print("Cross 점수: ", cross_score)
+        print("X 점수: ", x_score)
+
+        result = decide(cross_score, x_score)
+        expected = patternData['expected']
+        if result == expected:
+            pf = "PASS"
+            successCount += 1
+        else:
+            pf = "FAIL"
+            if result == "UNDECIDED":
+                fail[patternSize] = f"{patternSize} : 동점(UNDECIDED) 처리 규칙에 따라 FAIL"
+            elif result == "Cross":
+                fail[patternSize] = f"{patternSize} : Cross < +"
+            else:
+                fail[patternSize] = f"{patternSize} : Cross > +"
+        print(f"핀장: {result} | expected: {expected} | {pf}")
+        print()
+    return [totalCount, successCount, fail]
+    pass
+
+
+def NormalizeFilter(value):
     """filter 키를 표준 라벨로 변환"""
     value = str(value).strip().lower()
 
@@ -339,19 +466,24 @@ def normalize_filter(value):
 
 
 def AnalyzeJSON(filename = ""):
+
+    # file 이름이 ""인 경우
     if filename == "":
         filename = "data.json"
 
-    with open(filename, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    # with 문법은 알아둬.
+    with open(filename, "r", encoding="utf-8") as fd:
+        data = json.load(fd)
 
-
-    analyze_data(data)
-
-    performance_test(
-        data["filters"]
-    )
+    # 이게 되는 이유 알아두기
     # print(data)
+
+    AnalyzeData(data)
+
+    # performance_test(
+    #     data["filters"]
+    # )
+    
 
     # json 출력 테스트
     # PrintJSON(data, "filters_5_c")
@@ -419,7 +551,7 @@ def load_json(filename):
 # 패턴 하나 테스트
 # ==========================================
 
-def test_pattern(pattern_id, pattern_data, filters):
+def TestPattern(pattern_id, pattern_data, filters):
 
     pattern = pattern_data["input"]
 
@@ -472,8 +604,9 @@ def test_pattern(pattern_id, pattern_data, filters):
 # 전체 데이터 분석
 # ==========================================
 
-def analyze_data(data):
+def AnalyzeData(data):
 
+    print ("AnalyzeData")
     filters = data["filters"]
     patterns = data["patterns"]
 
@@ -481,33 +614,54 @@ def analyze_data(data):
     passed = 0
     failed = 0
 
+    # 이게 되네 ㅋㅋ
     print("=" * 60)
     print("data.json 분석 시작")
     print("=" * 60)
 
-    for pattern_id, pattern_data in patterns.items():
 
-        total += 1
+    # 1. 필터 로드 후 라벨 정규화된 필터로 교체
+    filters = LoadFilters(filters)
+    patterns = LoadPatterns(patterns)
 
-        status = test_pattern(
-            pattern_id,
-            pattern_data,
-            filters
-        )
+    # 2. 패턴 분석
+    summary = AnalyzePatterns(filters, patterns)
 
-        if status == "PASS":
-            passed += 1
-        else:
-            failed += 1
 
-    # 결과 요약
-    print("\n" + "=" * 60)
-    print("결과 요약")
-    print("=" * 60)
+    # 4. 결과 요약
+    print("총 테스트: ", summary[0], "개")
+    print("통과: ", summary[1], "개")
+    print("실패: ", summary[0] - summary[1], "개")
 
-    print(f"전체 테스트 : {total}")
-    print(f"통과        : {passed}")
-    print(f"실패        : {failed}")
+    print("실패 케이스: ")
+    for key, reason in summary[2].items():
+        print(key, reason)
+
+
+
+    # for pattern_id, pattern_data in patterns.items():
+
+    #     total += 1
+    #     print("qwer:", pattern_id, pattern_data)
+        # status = TestPattern(
+        #     pattern_id,
+        #     pattern_data,
+        #     filters
+        # )
+
+        # if status == "PASS":
+        #     passed += 1
+        # else:
+        #     failed += 1
+
+    # # 결과 요약
+    # print("\n" + "=" * 60)
+    # print("결과 요약")
+    # print("=" * 60)
+
+    # print(f"전체 테스트 : {total}")
+    # print(f"통과        : {passed}")
+    # print(f"실패        : {failed}")
 
 
 # ==========================================
