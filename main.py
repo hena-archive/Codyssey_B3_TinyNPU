@@ -767,9 +767,10 @@ def main():
     # 메뉴 선택
     choice = int(input("선택: "))
 
-    # 메뉴 확인
+    # 메뉴 확인 (예외 처리 일부로 안함 - 조건 없음)
     print("선택한 모드:", choice)
 
+    # 3.10? 이상 문법임
     match choice:
         case 1:
             UserInput()
