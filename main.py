@@ -336,6 +336,24 @@ def PrintJSON(data, key = ""):
             print(data['filters']['size_25']['x'])
 
 
+def CheckFilterSize(matrix, n):
+    if len(matrix) != n:
+        return False
+
+    for row in matrix:
+        if len(row) != n:
+            return False
+
+    return True
+
+def CheckFilterType(matrix):
+    for row in matrix:
+        for value in row:
+            if type(value) not in (int, float):
+                return False
+
+    return True
+
 def LoadFilters(filters):
     print("#---------------------------------------")
     print("# [1] 필터 로드")
@@ -351,26 +369,22 @@ def LoadFilters(filters):
         strList = sizeName.split("_")
 
         # size_N 형태인지 확인하기
-        flag = False
         if len(strList) != 2:
-            print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
-        else:
-            try:
-                size = int(strList[1])
-                name = strList[0]
-                if name != "size":
-                    print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
-                    continue
+            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - len")
 
-                # Todo: 살짝 애매
-                if type(size) != int:
-                    print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
-                    continue
+        headName = strList[0]
 
-                print("✓ ", sizeName, " 필터 로드 완료 (Cross, X)")
-            except:
-                print("x ", sizeName, " 필터 로드 실패 (Cross, X)")
+        # 이름 확인
+        if headName != "size":
+            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - headname err")
+            continue
 
+        # 숫자 확인
+        try:
+            matrixSize = float(strList[1])
+        except:
+            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - not number")
+            continue
 
         newFilter = {}
         # 라벨 필터링
@@ -381,7 +395,21 @@ def LoadFilters(filters):
                 filterName = "X"
             else:
                 pass
+
+            # matrix 사이즈 체크
+            flag = CheckFilterSize(matrix, matrixSize)
+            if flag == False:
+                print("x ", sizeName, " 필터 로드 실패 (Cross, X) - array")
+                continue
+
+
             newFilter[filterName] = matrix
+
+            # 타입 체크
+            flag = CheckFilterType(matrix, matrixSize)
+            if flag == False:
+                print("x ", sizeName, " 필터 로드 실패 (Cross, X) - type")
+                continue
 
         # filter 자체를 넣기
         normalizedFilters[sizeName] = newFilter
