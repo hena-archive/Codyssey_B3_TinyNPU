@@ -126,6 +126,17 @@ def CalculateNpuSimilarity(score_a, score_b):
     return judge_type
 
 
+def PrintUserInputMatrix(name, matrix):
+    print("=" * 30)
+    print(f"name이 {name}인 matrix 출력")
+    print("=" * 30)
+    for i in range(3):
+        for j in range(3):
+            print(matrix[i][j], end = " ")
+        print()
+    print()
+    print()
+
 def UserInput():
     # 1-1. 필터 입력 헤더 출력
     PrintInputFilterHeader()
@@ -145,9 +156,10 @@ def UserInput():
     pattern = []
     CreateMatrix(pattern)
 
-    print(filter_a)
-    print(filter_b)
-    print(pattern)
+    # User Input 확인 부분으로 변경
+    PrintUserInputMatrix("filter_a", filter_a)
+    PrintUserInputMatrix("filter_b",filter_b)
+    PrintUserInputMatrix("pattern",pattern)
 
     # 3-1 각 점수 계산하기
     score = []
