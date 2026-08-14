@@ -406,7 +406,7 @@ def LoadFilters(filters):
             newFilter[filterName] = matrix
 
             # 타입 체크
-            flag = CheckFilterType(matrix, matrixSize)
+            flag = CheckFilterType(matrix)
             if flag == False:
                 print("x ", sizeName, " 필터 로드 실패 (Cross, X) - type")
                 continue
@@ -640,6 +640,140 @@ def TestPattern(pattern_id, pattern_data, filters):
     return status
 
 
+
+def ValidatePatternCase(caseName, caseData, filters):
+    """
+    data.json의 패턴 1개를 검증한다.
+
+    반환:
+        (True, size, pattern, expected)
+        또는
+        (False, 실패사유, None, None)
+    """
+
+    # ---------------------------------------
+    # [1] caseData가 dictionary인지 확인
+    # ---------------------------------------
+    if not isinstance(caseData, dict):
+        return False, "케이스 데이터가 객체(dict)가 아님", None, None
+
+    # ---------------------------------------
+    # [2] input 존재 여부
+    # ---------------------------------------
+    if "input" not in caseData:
+        return False, "input 항목이 없음", None, None
+
+    # ---------------------------------------
+    # [3] expected 존재 여부
+    # ---------------------------------------
+    if "expected" not in caseData:
+        return False, "expected 항목이 없음", None, None
+
+    pattern = caseData["input"]
+    expected = caseData["expected"]
+
+    # ---------------------------------------
+    # [4] pattern이 list인지 확인
+    # ---------------------------------------
+    if not isinstance(pattern, list):
+        return False, "input이 list가 아님", None, None
+
+    # ---------------------------------------
+    # [5] pattern이 비어있는지 확인
+    # ---------------------------------------
+    if len(pattern) == 0:
+        return False, "input이 비어 있음", None, None
+
+    # ---------------------------------------
+    # [6] 행이 모두 list인지 확인
+    # ---------------------------------------
+    for row in pattern:
+        if not isinstance(row, list):
+            return False, "input이 2차원 배열이 아님", None, None
+
+    # ---------------------------------------
+    # [7] 행/열 크기 확인
+    # ---------------------------------------
+    size = len(pattern)
+
+    for row in pattern:
+        if len(row) != size:
+            return False, f"input 크기가 정사각형이 아님 ({size}행)", None, None
+
+    # ---------------------------------------
+    # [8] 모든 값이 숫자인지 확인
+    # bool은 Python에서 int의 subclass이므로 제외
+    # ---------------------------------------
+    for i in range(size):
+        for j in range(size):
+
+            value = pattern[i][j]
+
+            if isinstance(value, bool):
+                return False, f"input[{i}][{j}]가 숫자가 아님", None, None
+
+            if not isinstance(value, (int, float)):
+                return False, f"input[{i}][{j}]가 숫자가 아님", None, None
+
+    # ---------------------------------------
+    # [9] expected 라벨 확인
+    # ---------------------------------------
+    expectedLabel = NormalizeLabel(expected)
+
+    if expectedLabel is None:
+        return False, f"알 수 없는 expected 라벨: {expected}", None, None
+
+    # ---------------------------------------
+    # [10] 해당 크기의 filter가 존재하는지 확인
+    # ---------------------------------------
+    filterKey = f"size_{size}"
+
+    if filterKey not in filters:
+        return False, f"{filterKey} 필터가 존재하지 않음", None, None
+
+    # ---------------------------------------
+    # [11] filter 구조 확인
+    # ---------------------------------------
+    filterData = filters[filterKey]
+
+    if not isinstance(filterData, dict):
+        return False, f"{filterKey}가 객체(dict)가 아님", None, None
+
+    if "cross" not in filterData:
+        return False, f"{filterKey}에 cross 필터가 없음", None, None
+
+    if "x" not in filterData:
+        return False, f"{filterKey}에 x 필터가 없음", None, None
+
+    # ---------------------------------------
+    # [12] filter 크기 확인
+    # ---------------------------------------
+    for filterName in ["cross", "x"]:
+
+        filterMatrix = filterData[filterName]
+
+        if not isinstance(filterMatrix, list):
+            return False, f"{filterKey}/{filterName}가 list가 아님", None, None
+
+        if len(filterMatrix) != size:
+            return False, (
+                f"{filterKey}/{filterName} 크기 불일치 "
+                f"(예상 {size}x{size}, 실제 {len(filterMatrix)}행)"
+            ), None, None
+
+        for row in filterMatrix:
+
+            if not isinstance(row, list):
+                return False, f"{filterKey}/{filterName}가 2차원 배열이 아님", None, None
+
+            if len(row) != size:
+                return False, (
+                    f"{filterKey}/{filterName} 열 크기 불일치 "
+                    f"(예상 {size}, 실제 {len(row)})"
+                ), None, None
+
+    return True, size, pattern, expectedLabel
+
 # ==========================================
 # 전체 데이터 분석
 # ==========================================
@@ -678,9 +812,7 @@ def AnalyzeData(data):
         print(key, reason)
 
 
-
     # for pattern_id, pattern_data in patterns.items():
-
     #     total += 1
     #     print("qwer:", pattern_id, pattern_data)
         # status = TestPattern(
