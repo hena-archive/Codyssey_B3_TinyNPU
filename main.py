@@ -566,7 +566,8 @@ def LoadPatterns(patterns):
                 newPattern[patternKey] = originData
 
         # pattern 자체를 넣기
-        normalizedPatterns[sizeName] = newPattern
+        if flag == True:
+            normalizedPatterns[sizeName] = newPattern
             
     return normalizedPatterns
 
@@ -585,41 +586,40 @@ def AnalyzePatterns(normalizeFilters, normalizePatterns):
     successCount = 0
     fail = {}
 
-    # print(normalizePatterns)
+    
+    for patternSize, patternData in normalizePatterns.items():
+        strList = patternSize.split('_')
 
-    # for patternSize, patternData in normalizePatterns.items():
-    #     strList = patternSize.split('_')
-
-    #     totalCount += 1
-    #     keyName = strList[0] + "_" + strList[1]
-    #     print ("----- ", patternSize, " -----")
+        totalCount += 1
+        keyName = strList[0] + "_" + strList[1]
+        print ("----- ", patternSize, " -----")
 
 
-    #     # 점수 계산 시작
-    #     cross_score = mac(patternData['input'], normalizeFilters[keyName]['Cross'])
-    #     print (type(cross_score))
+        # 점수 계산 시작
+        cross_score = mac(patternData['input'], normalizeFilters[keyName]['Cross'])
+        print (type(cross_score))
 
-    #     x_score = mac(patternData['input'], normalizeFilters[keyName]['X'])
-    #     print (type(x_score))
-    #     print("Cross 점수: ", cross_score)
-    #     print("X 점수: ", x_score)
+        x_score = mac(patternData['input'], normalizeFilters[keyName]['X'])
+        print (type(x_score))
+        print("Cross 점수: ", cross_score)
+        print("X 점수: ", x_score)
 
-    #     result = Decide(cross_score, x_score)
-    #     expected = patternData['expected']
-    #     if result == expected:
-    #         pf = "PASS"
-    #         successCount += 1
-    #     else:
-    #         pf = "FAIL"
-    #         if result == "UNDECIDED":
-    #             fail[patternSize] = f"{patternSize} : 동점(UNDECIDED) 처리 규칙에 따라 FAIL"
-    #         elif result == "Cross":
-    #             fail[patternSize] = f"{patternSize} : Cross < +"
-    #         else:
-    #             fail[patternSize] = f"{patternSize} : Cross > +"
-    #     print(f"핀장: {result} | expected: {expected} | {pf}")
-    #     print()
-    # return [totalCount, successCount, fail]
+        result = Decide(cross_score, x_score)
+        expected = patternData['expected']
+        if result == expected:
+            pf = "PASS"
+            successCount += 1
+        else:
+            pf = "FAIL"
+            if result == "UNDECIDED":
+                fail[patternSize] = f"{patternSize} : 동점(UNDECIDED) 처리 규칙에 따라 FAIL"
+            elif result == "Cross":
+                fail[patternSize] = f"{patternSize} : Cross < +"
+            else:
+                fail[patternSize] = f"{patternSize} : Cross > +"
+        print(f"핀장: {result} | expected: {expected} | {pf}")
+        print()
+    return [totalCount, successCount, fail]
 
 
 def NormalizeFilter(value):
@@ -644,18 +644,14 @@ def AnalyzeJSON(filename = ""):
     with open(filename, "r", encoding="utf-8") as fd:
         data = json.load(fd)
 
+
+
     # 이게 되는 이유 알아두기
     # print(data)
 
     AnalyzeData(data)
 
-    # performance_test(
-    #     data["filters"]
-    # )
     
-
-    # json 출력 테스트
-    # PrintJSON(data, "filters_5_c")
 
 
 EPSILON = 1e-9
@@ -777,7 +773,10 @@ def TestPattern(pattern_id, pattern_data, filters):
 # ==========================================
 
 def PrintPattern(patterns, key):
-    print(patterns[key])
+    if key in patterns:
+        print(patterns[key])
+    else:
+        print(f"{key} 존재하지 않는 키")
 
 def AnalyzeData(data):
 
@@ -802,39 +801,25 @@ def AnalyzeData(data):
     # 2. 패턴 분석
     summary = AnalyzePatterns(filters, patterns)
 
-
+    # PrintPattern(patterns, "size_25_1")
+    # print(summary)
+    
+    # 3. 성능 분석
+    performance_test(data["filters"])
+    
     # # 4. 결과 요약
-    # print("총 테스트: ", summary[0], "개")
-    # print("통과: ", summary[1], "개")
-    # print("실패: ", summary[0] - summary[1], "개")
+    print()
+    print("#---------------------------------------")
+    print("# [4] 결과 요약")
+    print("#---------------------------------------")
 
-    # print("실패 케이스: ")
-    # for key, reason in summary[2].items():
-    #     print(key, reason)
+    print("총 테스트: ", summary[0], "개")
+    print("통과: ", summary[1], "개")
+    print("실패: ", summary[0] - summary[1], "개")
 
-
-    # for pattern_id, pattern_data in patterns.items():
-    #     total += 1
-    #     print("qwer:", pattern_id, pattern_data)
-        # status = TestPattern(
-        #     pattern_id,
-        #     pattern_data,
-        #     filters
-        # )
-
-        # if status == "PASS":
-        #     passed += 1
-        # else:
-        #     failed += 1
-
-    # # 결과 요약
-    # print("\n" + "=" * 60)
-    # print("결과 요약")
-    # print("=" * 60)
-
-    # print(f"전체 테스트 : {total}")
-    # print(f"통과        : {passed}")
-    # print(f"실패        : {failed}")
+    print("실패 케이스: ")
+    for key, reason in summary[2].items():
+        print(reason)
 
 
 # ==========================================
@@ -877,7 +862,7 @@ def measure_mac(size, filters, repeat=10):
 def performance_test(filters):
 
     print("\n" + "=" * 60)
-    print("성능 분석")
+    print("# [3] 성능 분석 (평균/10회)")
     print("=" * 60)
 
     print("크기(NxN) | 평균 시간(ms) | 연산 횟수(N²)")
