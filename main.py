@@ -34,20 +34,20 @@ filter_b = []
 
 
 # npu 메뉴 출력 부분
-def print_npu_simulator_menu():
+def PrintNPUSimulatorMenu():
     print("=== Mini NPU Simulator ===")
     print("[모드 선택]")
     print("1. 사용자 입력 (3x3)")
     print("2. data.json 분석")
 
 
-# 
+# 1 - 1. User Input의 필터 입력 문구
 def PrintInputFilterHeader():
     print("#----------------------------------------")
     print("# [1] 필터 입력")
     print("#----------------------------------------")
 
-
+# 1 - 1. User Input의 필터 타입 확인 및 입력 문구
 def PrintInputFilter(filter_type):
     filter_type = filter_type.upper()
 
@@ -58,8 +58,17 @@ def PrintInputFilter(filter_type):
     print("필터 ", filter_type, "(3줄 입력, 공백 구분)")
 
 
+# 1 - 2 User Input의 패턴 입력 문구
+def PrintInputPatternHeader():
+    print("#---------------------------------------")
+    print("# [2] 패턴 입력")
+    print("#---------------------------------------")
+    print("패턴 (3줄 입력, 공백 구분)")
+
+
+# 필터 및 매트릭스 만드는 함수
 def CreateMatrix(matrix, num = 3):
-    # 초기화
+    # 초기화(이미 matrix가 있을 경우)
     if len(matrix) > 0:
         matrix = []
 
@@ -77,12 +86,6 @@ def CreateMatrix(matrix, num = 3):
             matrix.append(numbers)
         except ValueError:
             print("오류: 숫자만 입력해주세요")
-
-def PrintInputPattern():
-    print("#---------------------------------------")
-    print("# [2] 패턴 입력")
-    print("#---------------------------------------")
-    print("패턴 (3줄 입력, 공백 구분)")
 
 
 def GetScore(filter, pattern, num = 3):
@@ -150,7 +153,7 @@ def UserInput():
     CreateMatrix(filter_b)
 
     # 2-1. 패턴 입력 헤더 출력
-    PrintInputPattern()
+    PrintInputPatternHeader()
 
     # 2-2. 패턴 입력 받기
     pattern = []
@@ -335,11 +338,37 @@ def PrintJSON(data, key = ""):
         case "filters_25_x":
             print(data['filters']['size_25']['x'])
 
+def CheckFilterName(sizeName):
+    strList = sizeName.split("_")
+
+    # size_N 형태인지 확인
+    if len(strList) != 2:
+        print("x ", sizeName, " 필터 로드 실패 - 이름 형식1")
+        return False, 0
+
+    # 앞부분이 size인지 확인
+    if strList[0] != "size":
+        print("x ", sizeName, " 필터 로드 실패 - 이름 형식2")
+        return False, 0
+
+    # 뒤의 값이 정수인지 확인
+    try:
+        matrixSize = int(strList[1])
+    except ValueError:
+        print("x ", sizeName, " 필터 로드 실패 - 크기 형식")
+        return False, 0
+
+    return True, matrixSize
 
 def CheckFilterSize(matrix, n):
+    # print("n:", n)
+    # print("type(matrix len):", type(len(matrix)))
+    # print("type(n):", type(n))
+    # print("comparison:", len(matrix) != n)
+
     if len(matrix) != n:
         return False
-
+    
     for row in matrix:
         if len(row) != n:
             return False
@@ -354,6 +383,48 @@ def CheckFilterType(matrix):
 
     return True
 
+def CheckFilter(filterName, matrix, matrixSize):
+
+    # 이름 정규화
+    if filterName == "cross":
+        filterName = "Cross"
+    elif filterName == "x":
+        filterName = "X"
+    else:
+        print("x ", filterName, " 필터 로드 실패 - 이름")
+        return False, ""
+
+    # 크기 검사
+    if CheckFilterSize(matrix, matrixSize) == False:
+        print("x ", filterName, " 필터 로드 실패 - Size")
+        return False, ""
+
+    # 타입 검사
+    if CheckFilterType(matrix) == False:
+        print("x ", filterName, " 필터 로드 실패 - Type")
+        return False, ""
+
+    return True, filterName
+
+def CheckFilterKeys(filterData):
+    if "x" not in filterData:
+        print()
+        return False
+    elif "cross" not in filterData:
+            return False
+    else:
+        return True
+
+def NormalizeFilterKeys(filterName):
+    if filterName == "x":
+        filterName = "X"
+    elif filterName == "cross":
+        filterName = "Cross"
+
+    return filterName
+
+
+
 def LoadFilters(filters):
     print("#---------------------------------------")
     print("# [1] 필터 로드")
@@ -362,134 +433,193 @@ def LoadFilters(filters):
     normalizedFilters = {}
 
 
+    
     for sizeName, filterData in filters.items():
-        print("my Key: ", sizeName)
+        # print("my Key: ", sizeName)
 
-        strList = []
-        strList = sizeName.split("_")
-
-        # size_N 형태인지 확인하기
-        if len(strList) != 2:
-            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - len")
-
-        headName = strList[0]
-
-        # 이름 확인
-        if headName != "size":
-            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - headname err")
+        # size_N 이름 및 크기 검사
+        flag, matrixSize = CheckFilterName(sizeName)
+        if flag == False:
+            print(f"X {sizeName} CheckFilterName 실패")
+            normalizedFilters.pop(sizeName, None)
             continue
 
-        # 숫자 확인
-        try:
-            matrixSize = float(strList[1])
-        except:
-            print("x ", sizeName, " 필터 로드 실패 (Cross, X) - not number")
+        # 필터 키 체크
+        flag = CheckFilterKeys(filterData)
+        if flag == False:
+            print(f"X {sizeName} CheckFilterKeys 실패")
+            normalizedFilters.pop(sizeName, None)
             continue
 
         newFilter = {}
-        # 라벨 필터링
+        # 필터 Cross / X 검사
+        flag = True
         for filterName, matrix in filterData.items():
-            if filterName == "cross":
-                filterName = "Cross"
-            elif filterName == "x":
-                filterName = "X"
-            else:
-                pass
+            # 필터 정규화
+            filterName = NormalizeFilterKeys(filterName)
 
             # matrix 사이즈 체크
             flag = CheckFilterSize(matrix, matrixSize)
             if flag == False:
-                print("x ", sizeName, " 필터 로드 실패 (Cross, X) - array")
-                continue
-
-
-            newFilter[filterName] = matrix
+                print("x ", sizeName, " 필터 로드 실패 CheckFilterSize - array")
+                newFilter.pop("filterName", None)
+                break
 
             # 타입 체크
             flag = CheckFilterType(matrix)
             if flag == False:
                 print("x ", sizeName, " 필터 로드 실패 (Cross, X) - type")
-                continue
+                break
+
+            newFilter[filterName] = matrix
 
         # filter 자체를 넣기
-        normalizedFilters[sizeName] = newFilter
+        if flag == True:
+            print(f"✓ {sizeName} 필터 로드 완료 (Cross, X)")
+            normalizedFilters[sizeName] = newFilter
 
 
     # print (normalizedFilters)
             
     return normalizedFilters
 
+def CheckPatternName(sizeName):
+    strList = sizeName.split("_")
+
+    # size_N_1 형태인지 확인
+    if len(strList) != 3:
+        print("x ", sizeName, " 패턴 로드 실패 - 이름 형식")
+        return False, 0
+
+    # 첫 번째 이름 확인
+    if strList[0] != "size":
+        print("x ", sizeName, " 패턴 로드 실패 - 이름 형식")
+        return False, 0
+
+    # 크기 확인
+    try:
+        matrixSize = int(strList[1])
+    except ValueError:
+        print("x ", sizeName, " 패턴 로드 실패 - 크기 형식")
+        return False, 0
+
+
+    return True, matrixSize
+
+def CheckPatternKeys(patternData):
+    if "input" not in patternData:
+        print()
+        return False
+    elif "expected" not in patternData:
+        return False
+    else:
+        return True
+
+
+def NormalizePatternKeys(patternName):
+    if patternName == "+":
+        patternName = "Cross"
+    elif patternName == "x":
+        patternName = "X"
+
+    return patternName
+
+
 def LoadPatterns(patterns):
     normalizedPatterns = {}
     
-    
+    # sizeName : size_13_1
+    # patternData : input or expected
     for sizeName, patternData in patterns.items():
         
+        flag, matrixSize = CheckPatternName(sizeName)
+        if flag == False:
+            print(f"[P] X {sizeName} CheckPatternName 실패")
+            normalizedPatterns.pop(sizeName, None)
+            continue
+
+
+        flag = CheckPatternKeys(patternData)
+        if flag == False:
+            print(f"[P] X {sizeName} CheckPatternKeys 실패")
+            normalizedPatterns.pop(sizeName, None)
+            continue
 
         newPattern = {}
+        flag = True
         # 라벨 필터링
+        # input case, expected
         for patternKey, originData in patternData.items():
-            if patternKey == "input":
-                pass
+            if patternKey == "expected":
+                originData = NormalizePatternKeys(originData)
+            elif patternKey == "input":
+                flag = CheckFilterSize(originData, matrixSize)
+                if flag == False:
+                    print("x ", sizeName, " 패턴 로드 실패 CheckFilterSize - array")
+                    break
+                flag = CheckFilterType(originData)
+                if flag == False:
+                    print("x ", sizeName, " 패턴 로드 실패 CheckFilterType - array")
+                    break
 
-            elif patternKey == "expected":
-                if originData == "x":
-                    originData = "X"
-                elif originData == "+":
-                    originData = "Cross"
-            else:
-                pass
-            newPattern[patternKey] = originData
+            if flag == True:
+                newPattern[patternKey] = originData
 
         # pattern 자체를 넣기
         normalizedPatterns[sizeName] = newPattern
-
-
-    # print (normalizedPatterns)
             
     return normalizedPatterns
 
-def AnalyzePatterns(normalizeFilters, normalizePatterns):
 
+
+def Decide(cross_score, x_score):
+    if abs(cross_score - x_score) < EPSILON:
+        return "UNDECIDED"
+    elif cross_score > x_score:
+        return "Cross"
+    else:
+        return "X"
+
+def AnalyzePatterns(normalizeFilters, normalizePatterns):
     totalCount = 0
     successCount = 0
     fail = {}
-    for patternSize, patternData in normalizePatterns.items():
-        strList = patternSize.split('_')
 
-        # 개수 체크
-        if len(strList) != 3:
-            print("tqtqtqtq\n\n\n\n")
-            continue
+    # print(normalizePatterns)
 
-        totalCount += 1
-        keyName = strList[0] + "_" + strList[1]
-        print ("----- ", patternSize, " -----")
+    # for patternSize, patternData in normalizePatterns.items():
+    #     strList = patternSize.split('_')
 
-        
-        # 점수 계산 시작
-        cross_score = mac(patternData['input'], normalizeFilters[keyName]['Cross'])
-        x_score = mac(patternData['input'], normalizeFilters[keyName]['X'])
-        print("Cross 점수: ", cross_score)
-        print("X 점수: ", x_score)
+    #     totalCount += 1
+    #     keyName = strList[0] + "_" + strList[1]
+    #     print ("----- ", patternSize, " -----")
 
-        result = decide(cross_score, x_score)
-        expected = patternData['expected']
-        if result == expected:
-            pf = "PASS"
-            successCount += 1
-        else:
-            pf = "FAIL"
-            if result == "UNDECIDED":
-                fail[patternSize] = f"{patternSize} : 동점(UNDECIDED) 처리 규칙에 따라 FAIL"
-            elif result == "Cross":
-                fail[patternSize] = f"{patternSize} : Cross < +"
-            else:
-                fail[patternSize] = f"{patternSize} : Cross > +"
-        print(f"핀장: {result} | expected: {expected} | {pf}")
-        print()
-    return [totalCount, successCount, fail]
-    pass
+
+    #     # 점수 계산 시작
+    #     cross_score = mac(patternData['input'], normalizeFilters[keyName]['Cross'])
+    #     print (type(cross_score))
+
+    #     x_score = mac(patternData['input'], normalizeFilters[keyName]['X'])
+    #     print (type(x_score))
+    #     print("Cross 점수: ", cross_score)
+    #     print("X 점수: ", x_score)
+
+    #     result = Decide(cross_score, x_score)
+    #     expected = patternData['expected']
+    #     if result == expected:
+    #         pf = "PASS"
+    #         successCount += 1
+    #     else:
+    #         pf = "FAIL"
+    #         if result == "UNDECIDED":
+    #             fail[patternSize] = f"{patternSize} : 동점(UNDECIDED) 처리 규칙에 따라 FAIL"
+    #         elif result == "Cross":
+    #             fail[patternSize] = f"{patternSize} : Cross < +"
+    #         else:
+    #             fail[patternSize] = f"{patternSize} : Cross > +"
+    #     print(f"핀장: {result} | expected: {expected} | {pf}")
+    #     print()
+    # return [totalCount, successCount, fail]
 
 
 def NormalizeFilter(value):
@@ -506,7 +636,6 @@ def NormalizeFilter(value):
 
 
 def AnalyzeJSON(filename = ""):
-
     # file 이름이 ""인 경우
     if filename == "":
         filename = "data.json"
@@ -561,32 +690,6 @@ def mac(pattern, filter_matrix):
 
     return score
 
-
-# ==========================================
-# 판정
-# ==========================================
-
-def decide(cross_score, x_score):
-
-    if abs(cross_score - x_score) < EPSILON:
-        return "UNDECIDED"
-
-    if cross_score > x_score:
-        return "Cross"
-
-    return "X"
-
-
-# ==========================================
-# JSON 불러오기
-# ==========================================
-
-def load_json(filename):
-
-    with open(filename, "r", encoding="utf-8") as file:
-        return json.load(file)
-
-
 # ==========================================
 # 패턴 하나 테스트
 # ==========================================
@@ -610,6 +713,45 @@ def TestPattern(pattern_id, pattern_data, filters):
     cross_score = mac(pattern, cross_filter)
     x_score = mac(pattern, x_filter)
 
+
+    if abs(cross_score - x_score) < EPSILON:
+        result = "UNDECIDED"
+    elif cross_score > x_score:
+        result = "Cross"
+    else:
+        result = "X"
+
+    # ---------------------------------------
+    # [5] 결과 출력
+    # ---------------------------------------
+    print(f"\n[{pattern_id}]")
+    print(f"크기       : {size}x{size}")
+    print(f"Cross 점수 : {cross_score}")
+    print(f"X 점수     : {x_score}")
+    print(f"판정       : {result}")
+    print(f"Expected   : {expected}")
+
+
+    if result == expected:
+        print("결과       : PASS")
+        passCount += 1
+    else:
+        print("결과       : FAIL")
+
+        if result == "UNDECIDED":
+            reason = "동점(UNDECIDED) 처리 규칙에 따라 FAIL"
+        else:
+            reason = f"expected({expected})와 판정({result}) 불일치"
+
+        print(f"실패 사유 : {reason}")
+
+        failCount += 1
+
+        failedCases.append({
+            "case": caseName,
+            "reason": reason
+        })
+
     # 판정
     result = decide(cross_score, x_score)
 
@@ -619,164 +761,23 @@ def TestPattern(pattern_id, pattern_data, filters):
     else:
         status = "FAIL"
 
-    # 출력
-    print(f"\n[{pattern_id}]")
-    print(f"크기       : {size}x{size}")
-    print(f"Cross 점수 : {cross_score}")
-    print(f"X 점수     : {x_score}")
-    print(f"판정       : {result}")
-    print(f"Expected   : {expected}")
-    print(f"결과       : {status}")
+    # if status == "FAIL":
 
-    if status == "FAIL":
+    #     if result == "UNDECIDED":
+    #         reason = "두 필터 점수가 epsilon 범위 내에서 동일함"
+    #     else:
+    #         reason = f"Expected={expected}, 실제 판정={result}"
 
-        if result == "UNDECIDED":
-            reason = "두 필터 점수가 epsilon 범위 내에서 동일함"
-        else:
-            reason = f"Expected={expected}, 실제 판정={result}"
-
-        print(f"실패 사유  : {reason}")
+    #     print(f"실패 사유  : {reason}")
 
     return status
-
-
-
-def ValidatePatternCase(caseName, caseData, filters):
-    """
-    data.json의 패턴 1개를 검증한다.
-
-    반환:
-        (True, size, pattern, expected)
-        또는
-        (False, 실패사유, None, None)
-    """
-
-    # ---------------------------------------
-    # [1] caseData가 dictionary인지 확인
-    # ---------------------------------------
-    if not isinstance(caseData, dict):
-        return False, "케이스 데이터가 객체(dict)가 아님", None, None
-
-    # ---------------------------------------
-    # [2] input 존재 여부
-    # ---------------------------------------
-    if "input" not in caseData:
-        return False, "input 항목이 없음", None, None
-
-    # ---------------------------------------
-    # [3] expected 존재 여부
-    # ---------------------------------------
-    if "expected" not in caseData:
-        return False, "expected 항목이 없음", None, None
-
-    pattern = caseData["input"]
-    expected = caseData["expected"]
-
-    # ---------------------------------------
-    # [4] pattern이 list인지 확인
-    # ---------------------------------------
-    if not isinstance(pattern, list):
-        return False, "input이 list가 아님", None, None
-
-    # ---------------------------------------
-    # [5] pattern이 비어있는지 확인
-    # ---------------------------------------
-    if len(pattern) == 0:
-        return False, "input이 비어 있음", None, None
-
-    # ---------------------------------------
-    # [6] 행이 모두 list인지 확인
-    # ---------------------------------------
-    for row in pattern:
-        if not isinstance(row, list):
-            return False, "input이 2차원 배열이 아님", None, None
-
-    # ---------------------------------------
-    # [7] 행/열 크기 확인
-    # ---------------------------------------
-    size = len(pattern)
-
-    for row in pattern:
-        if len(row) != size:
-            return False, f"input 크기가 정사각형이 아님 ({size}행)", None, None
-
-    # ---------------------------------------
-    # [8] 모든 값이 숫자인지 확인
-    # bool은 Python에서 int의 subclass이므로 제외
-    # ---------------------------------------
-    for i in range(size):
-        for j in range(size):
-
-            value = pattern[i][j]
-
-            if isinstance(value, bool):
-                return False, f"input[{i}][{j}]가 숫자가 아님", None, None
-
-            if not isinstance(value, (int, float)):
-                return False, f"input[{i}][{j}]가 숫자가 아님", None, None
-
-    # ---------------------------------------
-    # [9] expected 라벨 확인
-    # ---------------------------------------
-    expectedLabel = NormalizeLabel(expected)
-
-    if expectedLabel is None:
-        return False, f"알 수 없는 expected 라벨: {expected}", None, None
-
-    # ---------------------------------------
-    # [10] 해당 크기의 filter가 존재하는지 확인
-    # ---------------------------------------
-    filterKey = f"size_{size}"
-
-    if filterKey not in filters:
-        return False, f"{filterKey} 필터가 존재하지 않음", None, None
-
-    # ---------------------------------------
-    # [11] filter 구조 확인
-    # ---------------------------------------
-    filterData = filters[filterKey]
-
-    if not isinstance(filterData, dict):
-        return False, f"{filterKey}가 객체(dict)가 아님", None, None
-
-    if "cross" not in filterData:
-        return False, f"{filterKey}에 cross 필터가 없음", None, None
-
-    if "x" not in filterData:
-        return False, f"{filterKey}에 x 필터가 없음", None, None
-
-    # ---------------------------------------
-    # [12] filter 크기 확인
-    # ---------------------------------------
-    for filterName in ["cross", "x"]:
-
-        filterMatrix = filterData[filterName]
-
-        if not isinstance(filterMatrix, list):
-            return False, f"{filterKey}/{filterName}가 list가 아님", None, None
-
-        if len(filterMatrix) != size:
-            return False, (
-                f"{filterKey}/{filterName} 크기 불일치 "
-                f"(예상 {size}x{size}, 실제 {len(filterMatrix)}행)"
-            ), None, None
-
-        for row in filterMatrix:
-
-            if not isinstance(row, list):
-                return False, f"{filterKey}/{filterName}가 2차원 배열이 아님", None, None
-
-            if len(row) != size:
-                return False, (
-                    f"{filterKey}/{filterName} 열 크기 불일치 "
-                    f"(예상 {size}, 실제 {len(row)})"
-                ), None, None
-
-    return True, size, pattern, expectedLabel
 
 # ==========================================
 # 전체 데이터 분석
 # ==========================================
+
+def PrintPattern(patterns, key):
+    print(patterns[key])
 
 def AnalyzeData(data):
 
@@ -802,14 +803,14 @@ def AnalyzeData(data):
     summary = AnalyzePatterns(filters, patterns)
 
 
-    # 4. 결과 요약
-    print("총 테스트: ", summary[0], "개")
-    print("통과: ", summary[1], "개")
-    print("실패: ", summary[0] - summary[1], "개")
+    # # 4. 결과 요약
+    # print("총 테스트: ", summary[0], "개")
+    # print("통과: ", summary[1], "개")
+    # print("실패: ", summary[0] - summary[1], "개")
 
-    print("실패 케이스: ")
-    for key, reason in summary[2].items():
-        print(key, reason)
+    # print("실패 케이스: ")
+    # for key, reason in summary[2].items():
+    #     print(key, reason)
 
 
     # for pattern_id, pattern_data in patterns.items():
@@ -934,7 +935,7 @@ def performance_test(filters):
 # 실제 메인 함수
 def main():
     # 메뉴 출력 함수 호출
-    print_npu_simulator_menu()
+    PrintNPUSimulatorMenu()
 
     # 메뉴 선택
     choice = int(input("선택: "))
@@ -947,7 +948,9 @@ def main():
         case 1:
             UserInput()
         case 2:
+            pass
             AnalyzeJSON()
+            
 
 # main 실행
 if __name__ == "__main__":
